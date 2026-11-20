@@ -31,7 +31,7 @@ class MainActivity : Activity() {
                 setPadding(4, 10, 4, 10)
             }
         root.addView(label("ATÔMIC VOLUME", 28f, Color.rgb(255, 157, 35), true))
-        root.addView(label("AMPLIFICADOR DE ÁUDIO • SEGUNDO PLANO", 12f, Color.LTGRAY))
+        root.addView(label("AMPLIFICADOR DE ÁUDIO • SEM NOTIFICAÇÃO", 12f, Color.LTGRAY))
         amount = label("100%", 54f, Color.WHITE, true)
         root.addView(amount)
         root.addView(label("Escolha a amplificação", 15f, Color.LTGRAY))
@@ -52,7 +52,7 @@ class MainActivity : Activity() {
             text = "VOLUME NORMAL (100%)"
             setOnClickListener { setBoost(100) }
         }, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        root.addView(label("O modo global depende do suporte do Android/fabricante. Se o sistema bloquear efeitos na saída global, o app não consegue amplificar outros apps sem suporte especial. Volume alto pode causar distorção e danos auditivos.", 12f, Color.GRAY))
+        root.addView(label("Sem notificação permanente. O Android pode encerrar serviços comuns em segundo plano; a continuidade depende do sistema. A amplificação global também depende do suporte do aparelho.", 12f, Color.GRAY))
         setContentView(root)
         setBoost(prefs.getInt("percent", 100))
     }
@@ -61,19 +61,18 @@ class MainActivity : Activity() {
         val value = percent.coerceIn(100, 200)
         prefs.edit().putInt("percent", value).apply()
         amount.text = "$value%"
+        val intent = Intent(this, VolumeBoostService::class.java)
         if (value == 100) {
-            stopService(Intent(this, VolumeBoostService::class.java))
+            stopService(intent)
             status.text = "Amplificação desligada"
             return
         }
-        val intent = Intent(this, VolumeBoostService::class.java)
-            .putExtra(VolumeBoostService.EXTRA_PERCENT, value)
+        intent.putExtra(VolumeBoostService.EXTRA_PERCENT, value)
         try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) startForegroundService(intent)
-            else startService(intent)
-            status.text = "Serviço em segundo plano solicitado • $value%"
+            startService(intent)
+            status.text = "Amplificação solicitada • $value%"
         } catch (_: Exception) {
-            status.text = "Não foi possível iniciar o serviço em segundo plano"
+            status.text = "O Android impediu iniciar o serviço"
         }
     }
 }
