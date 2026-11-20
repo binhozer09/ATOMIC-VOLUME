@@ -1,7 +1,7 @@
 package com.atomicvolume
 
 import android.app.Activity
-import android.media.audiofx.LoudnessEnhancer
+import android.content.Intent
 import android.os.Bundle
 import android.graphics.Color
 import android.view.Gravity
@@ -10,9 +10,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 class MainActivity : Activity() {
-    private var enhancer: LoudnessEnhancer? = null
     private lateinit var amount: TextView
     private lateinit var status: TextView
+    private val prefs by lazy { getSharedPreferences("atomic_volume", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +31,7 @@ class MainActivity : Activity() {
                 setPadding(4, 10, 4, 10)
             }
         root.addView(label("ATÔMIC VOLUME", 28f, Color.rgb(255, 157, 35), true))
-        root.addView(label("AMPLIFICADOR DE ÁUDIO", 13f, Color.LTGRAY))
+        root.addView(label("AMPLIFICADOR DE ÁUDIO • SEGUNDO PLANO", 12f, Color.LTGRAY))
         amount = label("100%", 54f, Color.WHITE, true)
         root.addView(amount)
         root.addView(label("Escolha a amplificação", 15f, Color.LTGRAY))
@@ -52,27 +52,28 @@ class MainActivity : Activity() {
             text = "VOLUME NORMAL (100%)"
             setOnClickListener { setBoost(100) }
         }, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        root.addView(label("A amplificação global depende do suporte do Android e do fabricante. Volume alto pode causar distorção e danos auditivos.", 12f, Color.GRAY))
+        root.addView(label("O modo global depende do suporte do Android/fabricante. Se o sistema bloquear efeitos na saída global, o app não consegue amplificar outros apps sem suporte especial. Volume alto pode causar distorção e danos auditivos.", 12f, Color.GRAY))
         setContentView(root)
-        setBoost(100)
+        setBoost(prefs.getInt("percent", 100))
     }
 
     private fun setBoost(percent: Int) {
-        amount.text = "$percent%"
-        try {
-            if (enhancer == null) enhancer = LoudnessEnhancer(0)
-            val gainMb = (2000.0 * kotlin.math.log10(percent / 100.0)).toInt().coerceIn(0, 602)
-            enhancer?.setTargetGain(gainMb)
-            enhancer?.enabled = percent > 100
-            status.text = if (percent == 100) "Amplificação desligada" else "Amplificação solicitada: " + (gainMb / 1000.0).toString() + " dB"
-        } catch (e: Exception) {
-            status.text = "Efeito global não suportado neste aparelho"
+        val value = percent.coerceIn(100, 200)
+        prefs.edit().putInt("percent", value).apply()
+        amount.text = "$value%"
+        if (value == 100) {
+            stopService(Intent(this, VolumeBoostService::class.java))
+            status.text = "Amplificação desligada"
+            return
         }
-    }
-
-    override fun onDestroy() {
-        try { enhancer?.release() } catch (_: Exception) {}
-        enhancer = null
-        super.onDestroy()
+        val intent = Intent(this, VolumeBoostService::class.java)
+            .putExtra(VolumeBoostService.EXTRA_PERCENT, value)
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) startForegroundService(intent)
+            else startService(intent)
+            status.text = "Serviço em segundo plano solicitado • $value%"
+        } catch (_: Exception) {
+            status.text = "Não foi possível iniciar o serviço em segundo plano"
+        }
     }
 }
