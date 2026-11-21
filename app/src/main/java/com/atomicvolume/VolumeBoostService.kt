@@ -38,7 +38,7 @@ class VolumeBoostService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        currentPercent = (intent?.getIntExtra(EXTRA_PERCENT, currentPercent) ?: currentPercent).coerceIn(100, 200)
+        currentPercent = (intent?.getIntExtra(EXTRA_PERCENT, currentPercent) ?: currentPercent).coerceIn(100, 300)
         if (currentPercent == 100) {
             stopSelf()
             return START_NOT_STICKY
@@ -79,7 +79,7 @@ class VolumeBoostService : Service() {
     private fun applyBoost() {
         try {
             if (enhancer == null) enhancer = LoudnessEnhancer(0)
-            val gainMb = (2000.0 * kotlin.math.log10(currentPercent / 100.0)).toInt().coerceIn(0, 602)
+            val gainMb = (2000.0 * kotlin.math.log10(currentPercent / 100.0)).toInt().coerceIn(0, 1000)
             enhancer?.setTargetGain(gainMb)
             enhancer?.enabled = true
         } catch (_: Exception) { disableEffect() }
