@@ -8,8 +8,8 @@ import android.app.Service
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.media.MediaSessionManager
-import android.media.PlaybackState
+import android.media.session.MediaSessionManager
+import android.media.session.PlaybackState
 import android.media.audiofx.LoudnessEnhancer
 import android.os.Build
 import android.os.IBinder
