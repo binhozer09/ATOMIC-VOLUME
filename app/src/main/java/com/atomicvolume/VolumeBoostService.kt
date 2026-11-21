@@ -79,7 +79,9 @@ class VolumeBoostService : Service() {
     private fun applyBoost() {
         try {
             if (enhancer == null) enhancer = LoudnessEnhancer(0)
-            val gainMb = (2000.0 * kotlin.math.log10(currentPercent / 100.0)).toInt().coerceIn(0, 1000)
+            // Map the existing 125%–300% buttons to a stronger curve, with 300% = +25 dB (2500 mB).
+            // The Android audio effect / device firmware may still limit the audible result.
+            val gainMb = (2500.0 * kotlin.math.log10(currentPercent / 100.0) / kotlin.math.log10(3.0)).toInt().coerceIn(0, 2500)
             enhancer?.setTargetGain(gainMb)
             enhancer?.enabled = true
         } catch (_: Exception) { disableEffect() }
