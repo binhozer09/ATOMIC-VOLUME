@@ -21,7 +21,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.rgb(13, 13, 16)
         window.navigationBarColor = Color.rgb(13, 13, 16)
-        percent = getSharedPreferences("atomic_volume", MODE_PRIVATE).getInt("percent", 150).coerceIn(100, 200)
+        percent = getSharedPreferences("atomic_volume", MODE_PRIVATE).getInt("percent", 150).coerceIn(100, 300)
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -43,11 +43,11 @@ class MainActivity : Activity() {
             text = "LIBERAR ACESSO AOS PLAYERS"
             setOnClickListener { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
         }, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        listOf(120, 150, 175, 190, 200).chunked(2).forEach { pair ->
+        listOf(125, 150, 175, 200, 225, 250, 275, 300).chunked(2).forEach { pair ->
             val row = LinearLayout(this).apply { gravity = Gravity.CENTER }
             pair.forEach { level ->
                 row.addView(Button(this).apply {
-                    text = if (level == 200) "MAX 200%" else "$level%"
+                    text = if (level == 300) "MAX 300%" else "$level%"
                     setOnClickListener { setBoost(level) }
                 }, LinearLayout.LayoutParams(0, 62, 1f).apply { setMargins(5, 5, 5, 5) })
             }
@@ -84,7 +84,7 @@ class MainActivity : Activity() {
     }
 
     private fun setBoost(value: Int) {
-        percent = value.coerceIn(100, 200)
+        percent = value.coerceIn(100, 300)
         getSharedPreferences("atomic_volume", MODE_PRIVATE).edit().putInt("percent", percent).apply()
         amount.text = "$percent%"
         if (percent == 100) {
